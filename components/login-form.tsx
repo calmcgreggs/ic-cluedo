@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export function LoginForm({
   className,
@@ -27,6 +27,17 @@ export function LoginForm({
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
 
+  async function isAlreadyAuthenticted() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      router.push("/protected/profile");
+    }
+  }
+
+  useEffect(() => {
+    isAlreadyAuthenticted();
+  }, [])
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -38,7 +49,9 @@ export function LoginForm({
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.log(error);
+      }
 
       router.push("/protected/profile");
     } catch (error: unknown) {
