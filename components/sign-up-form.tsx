@@ -20,14 +20,15 @@ export function SignUpForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
+  const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [repeatPassword, setRepeatPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
-  const [displayName, setDisplayName] = useState("");
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,34 +42,47 @@ export function SignUpForm({
     }
 
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-      if (error) throw error;
-      const userId = data.user?.id;
-      if (!userId) {
-        throw new Error("Account was created but no user ID was returned.");
+      const normalizedDisplayName = displayName.trim();
+      if (!normalizedDisplayName) {
+        throw new Error("Display name is required.");
       }
 
-      const response = await fetch("/api/add-user", {
+      const normalizedEmail = email.trim();
+
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: normalizedEmail,
+        password,
+      });
+      if (signUpError) throw signUpError;
+
+      // Ensure authenticated session exists (works when email confirm is off/auto-confirmed)
+      if (!data.session) {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: normalizedEmail,
+          password,
+        });
+        if (signInError) throw signInError;
+      }
+
+      const response = await fetch("/api/game_user", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ display_name: displayName }),
+        body: JSON.stringify({ display_name: normalizedDisplayName }),
       });
 
-      console.log(response);
-
-      if (data.session) {
-        router.push("/protected/profile");
-        return;
+      // 409 means row already exists; allow navigation
+      if (!response.ok && response.status !== 409) {
+        const payload = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+        throw new Error(payload?.error ?? "Failed to create player profile.");
       }
 
-      router.push("/auth/login");
-    } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred");
+      router.push("/protected/profile");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setIsLoading(false);
     }
@@ -79,11 +93,25 @@ export function SignUpForm({
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">Sign up</CardTitle>
-          <CardDescription>Create a new account</CardDescription>
+          <CardDescription>
+            Create your account to join the game
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSignUp}>
             <div className="flex flex-col gap-6">
+              <div className="grid gap-2">
+                <Label htmlFor="display-name">Display name</Label>
+                <Input
+                  id="display-name"
+                  type="text"
+                  placeholder="Your in-game name"
+                  required
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                />
+              </div>
+
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -95,22 +123,9 @@ export function SignUpForm({
                   onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
+
               <div className="grid gap-2">
-                <div className="flex items-center">
-                  <Label htmlFor="display_name">Display Name</Label>
-                </div>
-                <Input
-                  id="display_name"
-                  type="text"
-                  required
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                />
-              </div>
-              <div className="grid gap-2">
-                <div className="flex items-center">
-                  <Label htmlFor="password">Password</Label>
-                </div>
+                <Label htmlFor="password">Password</Label>
                 <Input
                   id="password"
                   type="password"
@@ -119,10 +134,9 @@ export function SignUpForm({
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
+
               <div className="grid gap-2">
-                <div className="flex items-center">
-                  <Label htmlFor="repeat-password">Repeat Password</Label>
-                </div>
+                <Label htmlFor="repeat-password">Repeat password</Label>
                 <Input
                   id="repeat-password"
                   type="password"
@@ -131,11 +145,14 @@ export function SignUpForm({
                   onChange={(e) => setRepeatPassword(e.target.value)}
                 />
               </div>
+
               {error && <p className="text-sm text-red-500">{error}</p>}
+
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Creating an account..." : "Sign up"}
+                {isLoading ? "Creating account..." : "Create account"}
               </Button>
             </div>
+
             <div className="mt-4 text-center text-sm">
               Already have an account?{" "}
               <Link href="/auth/login" className="underline underline-offset-4">
