@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 export default function WelcomePage() {
@@ -7,6 +8,12 @@ export default function WelcomePage() {
         <span className="mb-4 inline-flex items-center rounded-full border bg-background/70 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur">
           🎯 Human Cluedo
         </span>
+        <Image
+          src="/logo-ic.png"
+          alt="IC Cluedo Logo"
+          width={240}
+          height={240}
+        />
 
         <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
           Welcome to <span className="text-primary">IC Cluedo</span>
