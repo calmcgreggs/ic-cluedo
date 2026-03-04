@@ -341,7 +341,7 @@ function MissionContent({
 
       <div className="relative">
         <div
-          className={`grid gap-3 text-sm sm:grid-cols-3 ${!showMission ? "blur-sm pointer-events-none" : ""}`}
+          className={`grid gap-3 text-sm sm:grid-cols-3 ${!showMission ? "blur-xl pointer-events-none" : ""}`}
         >
           <p className="rounded-md bg-muted/40 px-3 py-2">
             <span className="font-medium">Target:</span>{" "}
