@@ -89,6 +89,17 @@ export async function PATCH() {
     .eq("user_id", targetProfile.user_id);
 
   if (updateTargetError) {
+    // Rollback: revert the current player's kill if target update failed
+    await supabase
+      .from("game")
+      .update({
+        killed_ids: currentProfile.killed_ids ?? [],
+        target: currentProfile.target,
+        weapon: currentProfile.weapon,
+        location: currentProfile.location,
+      })
+      .eq("user_id", user.id);
+
     return NextResponse.json(
       { error: "Failed to update target profile" },
       { status: 500 },

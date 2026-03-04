@@ -5,6 +5,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Menu } from "lucide-react";
 
 export default function NavBar() {
   const router = useRouter();
@@ -55,35 +62,91 @@ export default function NavBar() {
         </Link>
 
         {isAuthenticated ? (
-          <div className="flex items-center gap-2">
-            {email === process.env.NEXT_PUBLIC_AUTH_EMAIL && (
+          <>
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center gap-2">
+              {email === process.env.NEXT_PUBLIC_AUTH_EMAIL && (
+                <Button asChild size="sm" variant="outline">
+                  <Link href="/admin">Admin</Link>
+                </Button>
+              )}
               <Button asChild size="sm" variant="outline">
-                <Link href="/admin">Admin</Link>
+                <Link href="/protected/leaderboard">Leaderboard</Link>
               </Button>
-            )}
-            <Button asChild size="sm" variant="outline">
-              <Link href="/protected/profile">Profile</Link>
-            </Button>
-            <Button asChild size="sm" variant="outline">
-              <button
-                onClick={async () => {
-                  await supabase.auth.signOut();
-                  router.refresh();
-                }}
-              >
-                Sign Out
-              </button>
-            </Button>
-          </div>
+              <Button asChild size="sm" variant="outline">
+                <Link href="/protected/profile">Profile</Link>
+              </Button>
+              <Button asChild size="sm" variant="outline">
+                <button
+                  onClick={async () => {
+                    await supabase.auth.signOut();
+                    router.refresh();
+                  }}
+                >
+                  Sign Out
+                </button>
+              </Button>
+            </div>
+
+            {/* Mobile Menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild className="md:hidden">
+                <Button size="icon" variant="outline">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                {email === process.env.NEXT_PUBLIC_AUTH_EMAIL && (
+                  <DropdownMenuItem asChild>
+                    <Link href="/admin">Admin</Link>
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem asChild>
+                  <Link href="/protected/leaderboard">Leaderboard</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/protected/profile">Profile</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={async () => {
+                    await supabase.auth.signOut();
+                    router.refresh();
+                  }}
+                >
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
         ) : (
-          <div className="flex items-center gap-2">
-            <Button asChild size="sm" variant="outline">
-              <Link href="/auth/login">Sign in</Link>
-            </Button>
-            <Button asChild size="sm" variant="default">
-              <Link href="/auth/sign-up">Sign up</Link>
-            </Button>
-          </div>
+          <>
+            {/* Desktop Navigation */}
+            <div className="hidden sm:flex items-center gap-2">
+              <Button asChild size="sm" variant="outline">
+                <Link href="/auth/login">Sign in</Link>
+              </Button>
+              <Button asChild size="sm" variant="default">
+                <Link href="/auth/sign-up">Sign up</Link>
+              </Button>
+            </div>
+
+            {/* Mobile Menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild className="sm:hidden">
+                <Button size="icon" variant="outline">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem asChild>
+                  <Link href="/auth/login">Sign in</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/auth/sign-up">Sign up</Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
         )}
       </nav>
     </header>

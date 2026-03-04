@@ -27,7 +27,6 @@ export function LoginForm({
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
 
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -40,7 +39,8 @@ export function LoginForm({
       });
 
       if (error) {
-        console.log(error);
+        setError(error.message);
+        return;
       }
 
       router.push("/protected/profile");
