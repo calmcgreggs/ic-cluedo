@@ -33,20 +33,37 @@ export function LoginForm({
     setError(null);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      console.log("Attempting login with email:", email);
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
       });
 
+      console.log("Auth response:", { data, error });
+
       if (error) {
+        console.error("Login error:", error.message);
         setError(error.message);
+        setIsLoading(false);
         return;
       }
 
-      router.push("/protected/profile");
+      console.log("Login successful, session:", data.session);
+      // If we have a session, redirect immediately
+      if (data.session) {
+        console.log("Session present, redirecting...");
+        setTimeout(() => {
+          window.location.href = "/protected/profile";
+        }, 500);
+      } else {
+        console.error("No session returned from login");
+        setError("Login failed: no session");
+        setIsLoading(false);
+      }
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred");
-    } finally {
+      const err = error instanceof Error ? error.message : "An error occurred";
+      console.error("Catch error:", err);
+      setError(err);
       setIsLoading(false);
     }
   };
@@ -76,15 +93,7 @@ export function LoginForm({
               </div>
 
               <div className="grid gap-2">
-                <div className="flex items-center">
-                  <Label htmlFor="password">Password</Label>
-                  <Link
-                    href="/auth/forgot-password"
-                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-                  >
-                    Forgot your password?
-                  </Link>
-                </div>
+                <Label htmlFor="password">Password</Label>
                 <Input
                   id="password"
                   type="password"

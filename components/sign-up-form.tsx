@@ -80,7 +80,10 @@ export function SignUpForm({
         throw new Error(payload?.error ?? "Failed to create player profile.");
       }
 
-      router.push("/protected/profile");
+      // Redirect after successful signup
+      setTimeout(() => {
+        window.location.href = "/protected/profile";
+      }, 500);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {

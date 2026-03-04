@@ -80,7 +80,7 @@ export default function NavBar() {
                 <button
                   onClick={async () => {
                     await supabase.auth.signOut();
-                    router.refresh();
+                    window.location.href = "/auth/login";
                   }}
                 >
                   Sign Out
@@ -110,7 +110,7 @@ export default function NavBar() {
                 <DropdownMenuItem
                   onClick={async () => {
                     await supabase.auth.signOut();
-                    router.refresh();
+                    window.location.href = "/auth/login";
                   }}
                 >
                   Sign Out
