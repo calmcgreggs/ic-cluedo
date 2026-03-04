@@ -12,6 +12,20 @@ export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
   title: "IC Cluedo",
   description: "A Cluedo-inspired game",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "IC Cluedo",
+  },
+  icons: {
+    apple: [
+      {
+        url: "/apple-touch-icon.png",
+        sizes: "180x180",
+        type: "image/png",
+      },
+    ],
+  },
 };
 
 const geistSans = Geist({
