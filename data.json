@@ -1,0 +1,9 @@
+{
+  "weapons": ["Beer Bottle", "Coaster", "Vape", "Lighter"],
+  "locations": [
+    "On the Street",
+    "In A Bar (Not At The Bar)",
+    "In A Bar (At The Bar)",
+    "On Public Transport"
+  ]
+}

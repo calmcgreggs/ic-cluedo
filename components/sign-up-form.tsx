@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 export function SignUpForm({
   className,
@@ -26,10 +26,11 @@ export function SignUpForm({
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const supabase = useMemo(() => createClient(), []);
+  const [displayName, setDisplayName] = useState("");
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    const supabase = createClient();
     setIsLoading(true);
     setError(null);
 
@@ -40,15 +41,32 @@ export function SignUpForm({
     }
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/protected`,
-        },
       });
       if (error) throw error;
-      router.push("/auth/sign-up-success");
+      const userId = data.user?.id;
+      if (!userId) {
+        throw new Error("Account was created but no user ID was returned.");
+      }
+
+      const response = await fetch("/api/add-user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ display_name: displayName }),
+      });
+
+      console.log(response);
+
+      if (data.session) {
+        router.push("/protected/profile");
+        return;
+      }
+
+      router.push("/auth/login");
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
     } finally {
@@ -75,6 +93,18 @@ export function SignUpForm({
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+              <div className="grid gap-2">
+                <div className="flex items-center">
+                  <Label htmlFor="display_name">Display Name</Label>
+                </div>
+                <Input
+                  id="display_name"
+                  type="text"
+                  required
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
                 />
               </div>
               <div className="grid gap-2">
