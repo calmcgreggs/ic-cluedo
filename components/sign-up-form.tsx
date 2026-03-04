@@ -30,19 +30,6 @@ export function SignUpForm({
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
 
-  async function isAlreadyAuthenticted() {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (session) {
-      router.push("/protected/profile");
-    }
-  }
-
-  useEffect(() => {
-    isAlreadyAuthenticted();
-  }, []);
-
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -77,7 +64,7 @@ export function SignUpForm({
         if (signInError) throw signInError;
       }
 
-      const response = await fetch("/api/game_user", {
+      const response = await fetch("/api/add_user", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

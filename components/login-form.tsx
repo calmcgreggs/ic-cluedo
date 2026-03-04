@@ -27,16 +27,6 @@ export function LoginForm({
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
 
-  async function isAlreadyAuthenticted() {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-      router.push("/protected/profile");
-    }
-  }
-
-  useEffect(() => {
-    isAlreadyAuthenticted();
-  }, [])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

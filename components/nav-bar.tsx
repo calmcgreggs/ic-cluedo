@@ -10,6 +10,18 @@ export default function NavBar() {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [email, setEmail] = useState<string | null>(null);
+
+  async function getAuthEmail() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    setEmail(user?.email ?? null);
+  }
+
+  useEffect(() => {
+    getAuthEmail();
+  }, [supabase]);
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -44,6 +56,11 @@ export default function NavBar() {
 
         {isAuthenticated ? (
           <div className="flex items-center gap-2">
+            {email === process.env.NEXT_PUBLIC_AUTH_EMAIL && (
+              <Button asChild size="sm" variant="outline">
+                <Link href="/admin">Admin</Link>
+              </Button>
+            )}
             <Button asChild size="sm" variant="outline">
               <Link href="/protected/profile">Profile</Link>
             </Button>

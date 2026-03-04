@@ -66,6 +66,14 @@ export default function ProfilePage() {
     setConfirmingKill(false);
   }
 
+  function lastOneAlive() {
+    if (!gameData || !profile) return false;
+    const alivePlayers = gameData.filter((row) => row.alive);
+    return (
+      alivePlayers.length === 1 && alivePlayers[0].user_id === profile.user_id
+    );
+  }
+
   useEffect(() => {
     let isMounted = true;
 
@@ -153,6 +161,26 @@ export default function ProfilePage() {
     );
   }
 
+  if (lastOneAlive()) {
+    return (
+      <main className="mx-auto w-full max-w-3xl px-4 py-8">
+        <div className="space-y-4 rounded-xl border bg-card p-6 shadow-sm">
+          <h1 className="text-2xl font-semibold tracking-tight">Profile</h1>
+          <p className="text-sm text-muted-foreground">
+            Congratulations! You are the last one alive and have won the game!
+          </p>
+          <Image
+            src="/winner.gif"
+            alt="You are the winner"
+            width={400}
+            height={300}
+            className="mx-auto"
+          />
+        </div>
+      </main>
+    );
+  }
+
   if (profile.target === id) {
     return (
       <main className="mx-auto w-full max-w-3xl px-4 py-8">
@@ -194,6 +222,34 @@ export default function ProfilePage() {
               <span className="font-medium">User ID:</span>{" "}
               <span className="text-muted-foreground">{profile.user_id}</span>
             </p>
+          </div>
+        </section>
+
+        <section className="rounded-xl border bg-card p-6 shadow-sm">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-base font-semibold">Your Kills</h2>
+          </div>
+
+          <div className="grid gap-3 text-sm sm:grid-cols-1">
+            {profile.killed_ids && profile.killed_ids.length > 0 ? (
+              profile.killed_ids.map((killedId) => {
+                const killedProfile = gameData?.find(
+                  (row) => row.user_id === killedId,
+                );
+                return (
+                  <p
+                    key={killedId}
+                    className="rounded-md bg-muted/40 px-3 py-2"
+                  >
+                    {killedProfile?.display_name ?? killedId}
+                  </p>
+                );
+              })
+            ) : (
+              <p className="rounded-md bg-muted/40 px-3 py-2">
+                You haven&apos;t made any kills yet.
+              </p>
+            )}
           </div>
         </section>
 
