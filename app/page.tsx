@@ -1,7 +1,17 @@
 import Image from "next/image";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
 
-export default function WelcomePage() {
+export default async function WelcomePage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    redirect("/protected/profile");
+  }
   return (
     <main className="min-h-[85vh] bg-gradient-to-b from-background to-muted/30">
       <section className="mx-auto flex w-full max-w-4xl flex-col items-center justify-center px-6 py-20 text-center">
