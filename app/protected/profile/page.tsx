@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -257,43 +257,132 @@ export default function ProfilePage() {
           <div></div>
         ) : (
           <section className="rounded-xl border bg-card p-6 shadow-sm">
-            <h2 className="mb-4 text-base font-semibold">Your Mission</h2>
-            <div className="grid gap-3 text-sm sm:grid-cols-3">
-              <p className="rounded-md bg-muted/40 px-3 py-2">
-                <span className="font-medium">Target:</span>{" "}
-                {targetProfile?.display_name ?? profile.target ?? "-"}
-              </p>
-              <p className="rounded-md bg-muted/40 px-3 py-2">
-                <span className="font-medium">Weapon:</span>{" "}
-                {profile.weapon ?? "-"}
-              </p>
-              <p className="rounded-md bg-muted/40 px-3 py-2">
-                <span className="font-medium">Location:</span>{" "}
-                {profile.location ?? "-"}
-              </p>
-            </div>
-
-            <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-xs text-muted-foreground">
-                Confirm only after a valid elimination.
-              </p>
-              <Button
-                variant="destructive"
-                className="w-full sm:w-auto"
-                onClick={() => {
-                  if (!confirmingKill) {
-                    setConfirmingKill(true);
-                    return;
-                  }
-                  void handleKill();
-                }}
-              >
-                {confirmingKill ? "Are you sure?" : "Confirm Kill"}
-              </Button>
-            </div>
+            <MissionContent
+              targetProfile={targetProfile}
+              profile={profile}
+              confirmingKill={confirmingKill}
+              setConfirmingKill={setConfirmingKill}
+              handleKill={handleKill}
+            />
           </section>
         )}
       </div>
     </main>
+  );
+}
+
+type MissionContentProps = {
+  targetProfile: ProfileRow | null;
+  profile: ProfileRow;
+  confirmingKill: boolean;
+  setConfirmingKill: (v: boolean) => void;
+  handleKill: () => void;
+};
+
+function MissionContent({
+  targetProfile,
+  profile,
+  confirmingKill,
+  setConfirmingKill,
+  handleKill,
+}: MissionContentProps) {
+  const [showMission, setShowMission] = useState(false);
+  const [secondsLeft, setSecondsLeft] = useState(0);
+  const timerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, []);
+
+  function revealForTenSeconds() {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+
+    setShowMission(true);
+    setSecondsLeft(10);
+    timerRef.current = window.setInterval(() => {
+      setSecondsLeft((s) => {
+        if (s <= 1) {
+          if (timerRef.current) {
+            clearInterval(timerRef.current);
+            timerRef.current = null;
+          }
+          setShowMission(false);
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+  }
+
+  return (
+    <>
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-base font-semibold">Your Mission</h2>
+        <div className="flex items-center gap-2">
+          {!showMission ? (
+            <Button onClick={revealForTenSeconds} className="sm:w-auto">
+              Show Mission (10s)
+            </Button>
+          ) : (
+            <span className="text-sm text-muted-foreground">
+              Visible: {secondsLeft}s
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className="relative">
+        <div
+          className={`grid gap-3 text-sm sm:grid-cols-3 ${!showMission ? "blur-sm pointer-events-none" : ""}`}
+        >
+          <p className="rounded-md bg-muted/40 px-3 py-2">
+            <span className="font-medium">Target:</span>{" "}
+            {targetProfile?.display_name ?? profile.target ?? "-"}
+          </p>
+          <p className="rounded-md bg-muted/40 px-3 py-2">
+            <span className="font-medium">Weapon:</span> {profile.weapon ?? "-"}
+          </p>
+          <p className="rounded-md bg-muted/40 px-3 py-2">
+            <span className="font-medium">Location:</span>{" "}
+            {profile.location ?? "-"}
+          </p>
+        </div>
+
+        {!showMission && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="rounded-md bg-black/40 px-4 py-2 text-sm font-semibold text-white">
+              Spoiler
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-xs text-muted-foreground">
+          Confirm only after a valid elimination.
+        </p>
+        <Button
+          variant="destructive"
+          className="w-full sm:w-auto"
+          onClick={() => {
+            if (!confirmingKill) {
+              setConfirmingKill(true);
+              return;
+            }
+            void handleKill();
+          }}
+        >
+          {confirmingKill ? "Are you sure?" : "Confirm Kill"}
+        </Button>
+      </div>
+    </>
   );
 }
