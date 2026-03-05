@@ -1,5 +1,5 @@
 {
-  "weapons": ["Beer Bottle", "Coaster", "Vape", "Lighter", "Phone", "Wallet"],
+  "weapons": ["Beer Bottle", "Coaster", "Straw", "Lighter", "Phone", "Wallet"],
   "locations": [
     "On the Street",
     "In A Bar (Not At The Bar)",
@@ -7,5 +7,33 @@
     "On Public Transport",
     "In A Bar (Not At The Bar)",
     "In A Bar (At The Bar)"
+    
+  ],
+  "passwords": [
+    "lantern",
+    "whisper",
+    "cobalt",
+    "meadow",
+    "telescope",
+    "marble",
+    "puzzle",
+    "ember",
+    "harbor",
+    "velvet",
+    "orchard",
+    "thunder",
+    "cinnamon",
+    "compass",
+    "ripple",
+    "quartz",
+    "horizon",
+    "cascade",
+    "saffron",
+    "chimney",
+    "bicycle",
+    "glacier",
+    "inkwell",
+    "paradox",
+    "sapphire"
   ]
 }

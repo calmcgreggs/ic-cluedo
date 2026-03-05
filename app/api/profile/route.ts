@@ -11,7 +11,7 @@ type GameRow = {
   alive: boolean | null;
 };
 
-export async function PATCH() {
+export async function PATCH(request: Request) {
   const supabase = await createClient();
 
   const {
@@ -40,9 +40,17 @@ export async function PATCH() {
     return NextResponse.json({ error: "No target assigned" }, { status: 400 });
   }
 
+  // Read password provided by the killer
+  const body = await request.json().catch(() => ({}));
+  const providedPassword =
+    typeof body?.password === "string" ? body.password : null;
+  if (!providedPassword) {
+    return NextResponse.json({ error: "Password required" }, { status: 400 });
+  }
+
   const { data: targetProfile, error: targetProfileError } = await supabase
     .from("game")
-    .select("user_id,target,weapon,location")
+    .select("user_id,target,weapon,location,kill_password")
     .eq("user_id", currentProfile.target)
     .single();
 
@@ -51,6 +59,12 @@ export async function PATCH() {
       { error: "Target profile not found" },
       { status: 404 },
     );
+  }
+
+  // Validate provided password against the stored kill_password for the target
+  const expectedPassword = (targetProfile as any).kill_password ?? null;
+  if (!expectedPassword || providedPassword !== expectedPassword) {
+    return NextResponse.json({ error: "Incorrect password" }, { status: 403 });
   }
 
   const updatedKilledIds = [

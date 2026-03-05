@@ -35,8 +35,11 @@ export async function POST(request: NextRequest) {
       location: null,
       alive: true,
       killed_ids: [],
+      kill_password: null,
     })
-    .select("user_id,display_name,target,weapon,location,alive,killed_ids")
+    .select(
+      "user_id,display_name,target,weapon,location,alive,killed_ids,kill_password",
+    )
     .single();
 
   if (error) {

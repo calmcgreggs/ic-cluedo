@@ -14,6 +14,7 @@ type ProfileRow = {
   location: string | null;
   alive: boolean | null;
   killed_ids: string[] | null;
+  kill_password?: string | null;
 };
 
 export default function ProfilePage() {
@@ -27,10 +28,12 @@ export default function ProfilePage() {
   const [gameData, setGameData] = useState<ProfileRow[] | null>(null);
   const [targetProfile, setTargetProfile] = useState<ProfileRow | null>(null);
 
-  async function handleKill() {
-    if (!profile) return;
+  async function handleKill(providedPassword: string) {
+    if (!profile) return false;
     const response = await fetch("/api/profile", {
       method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: providedPassword }),
     });
 
     const result = (await response.json()) as {
@@ -41,7 +44,7 @@ export default function ProfilePage() {
 
     if (!response.ok || !result.profile) {
       alert(result.error ?? "Failed to confirm kill. Please try again.");
-      return;
+      return false;
     }
 
     alert("Kill confirmed successfully.");
@@ -64,6 +67,7 @@ export default function ProfilePage() {
         : prev,
     );
     setConfirmingKill(false);
+    return true;
   }
 
   function lastOneAlive() {
@@ -276,7 +280,7 @@ type MissionContentProps = {
   profile: ProfileRow;
   confirmingKill: boolean;
   setConfirmingKill: (v: boolean) => void;
-  handleKill: () => void;
+  handleKill: (password: string) => Promise<boolean>;
 };
 
 function MissionContent({
@@ -289,6 +293,9 @@ function MissionContent({
   const [showMission, setShowMission] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(0);
   const timerRef = useRef<number | null>(null);
+  const [enteredPassword, setEnteredPassword] = useState("");
+  const ownKillPassword = profile.kill_password ?? "";
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -322,6 +329,23 @@ function MissionContent({
     }, 1000);
   }
 
+  async function confirmKill() {
+    if (!enteredPassword) {
+      alert("Please enter the target's password.");
+      return;
+    }
+
+    try {
+      setIsProcessing(true);
+      const ok = await handleKill(enteredPassword);
+      if (ok) {
+        setEnteredPassword("");
+      }
+    } finally {
+      setIsProcessing(false);
+    }
+  }
+
   return (
     <>
       <div className="mb-4 flex items-center justify-between">
@@ -341,7 +365,7 @@ function MissionContent({
 
       <div className="relative">
         <div
-          className={`grid gap-3 text-sm sm:grid-cols-3 ${!showMission ? "blur-xl pointer-events-none" : ""}`}
+          className={`grid gap-3 text-sm sm:grid-cols-2 ${!showMission ? "blur-xl pointer-events-none" : ""}`}
         >
           <p className="rounded-md bg-muted/40 px-3 py-2">
             <span className="font-medium">Target:</span>{" "}
@@ -353,6 +377,10 @@ function MissionContent({
           <p className="rounded-md bg-muted/40 px-3 py-2">
             <span className="font-medium">Location:</span>{" "}
             {profile.location ?? "-"}
+          </p>
+          <p className="rounded-md bg-muted/40 px-3 py-2">
+            <span className="font-medium">Your Kill Password:</span>{" "}
+            {ownKillPassword ?? "-"}
           </p>
         </div>
 
@@ -366,22 +394,40 @@ function MissionContent({
       </div>
 
       <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs text-muted-foreground">
-          Confirm only after a valid elimination.
-        </p>
-        <Button
-          variant="destructive"
-          className="w-full sm:w-auto"
-          onClick={() => {
-            if (!confirmingKill) {
-              setConfirmingKill(true);
-              return;
-            }
-            void handleKill();
-          }}
-        >
-          {confirmingKill ? "Are you sure?" : "Confirm Kill"}
-        </Button>
+        <div>
+          <p className="text-xs text-muted-foreground">
+            Confirm only after a valid elimination.
+          </p>
+        </div>
+
+        <div className="flex w-full max-w-sm gap-2">
+          {confirmingKill ? (
+            <>
+              <input
+                value={enteredPassword}
+                onChange={(e) => setEnteredPassword(e.target.value)}
+                placeholder="Enter target password"
+                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                disabled={isProcessing}
+              />
+              <Button
+                variant="destructive"
+                onClick={() => void confirmKill()}
+                loading={isProcessing}
+              >
+                Confirm Kill
+              </Button>
+            </>
+          ) : (
+            <Button
+              variant="destructive"
+              className="w-full sm:w-auto"
+              onClick={() => setConfirmingKill(true)}
+            >
+              Confirm Kill
+            </Button>
+          )}
+        </div>
       </div>
     </>
   );

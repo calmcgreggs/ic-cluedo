@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 import gameData from "@/data.json";
+import tourData from "@/data-tour.json";
 
 type GameRow = {
   user_id: string;
@@ -31,8 +32,12 @@ function buildAssignments(items: string[], count: number): string[] {
   return assignments.slice(0, count);
 }
 
-export async function PATCH() {
+export async function PATCH(request: Request) {
   const supabase = await createClient();
+
+  const url = new URL(request.url);
+  const version = url.searchParams.get("version") ?? "night";
+  const chosenData = version === "tour" ? tourData : gameData;
 
   const {
     data: { user },
@@ -45,7 +50,9 @@ export async function PATCH() {
 
   const { data: players, error: playersError } = await supabase
     .from("game")
-    .select("user_id,display_name,target,weapon,location,killed_ids,alive")
+    .select(
+      "user_id,display_name,target,weapon,location,killed_ids,alive,kill_password",
+    )
     .order("user_id", { ascending: true });
 
   if (playersError || !players) {
@@ -64,11 +71,11 @@ export async function PATCH() {
 
   const shuffledPlayers = shuffleArray(players);
   const weaponAssignments = buildAssignments(
-    gameData.weapons,
+    chosenData.weapons,
     shuffledPlayers.length,
   );
   const locationAssignments = buildAssignments(
-    gameData.locations,
+    chosenData.locations,
     shuffledPlayers.length,
   );
 
@@ -85,8 +92,21 @@ export async function PATCH() {
     };
   });
 
+  // Assign a fresh password for EVERY player on a new game
+  let passwordAssignments: Record<string, string> = {};
+  const shuffledPasswords = shuffleArray(chosenData.passwords ?? []);
+  // Expand shuffledPasswords to cover all players
+  while (shuffledPasswords.length < updates.length) {
+    shuffledPasswords.push(...shuffleArray(chosenData.passwords ?? []));
+  }
+  updates.forEach((u, i) => {
+    passwordAssignments[u.user_id] = shuffledPasswords[i];
+  });
+
   const updateResults = await Promise.all(
     updates.map(async (update) => {
+      const passwordToSet = passwordAssignments[update.user_id] ?? null;
+
       const { error } = await supabase
         .from("game")
         .update({
@@ -95,6 +115,8 @@ export async function PATCH() {
           location: update.location,
           alive: true,
           killed_ids: [],
+          // always set a fresh kill_password for a new game
+          kill_password: passwordToSet,
         })
         .eq("user_id", update.user_id);
 
